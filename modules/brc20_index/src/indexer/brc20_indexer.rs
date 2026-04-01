@@ -93,6 +93,32 @@ impl Brc20Indexer {
             parse_hex_number(&self.brc20_prog_client.eth_block_number().await?)?
         );
 
+        // Wait for the servers to start
+        if self.config.brc20_prog_bitcoin_rpc_proxy_server_enabled {
+            let bitcoin_rpc_proxy_addr_clone =
+                self.config.brc20_prog_bitcoin_rpc_proxy_server_addr.clone();
+            let bitcoin_rpc_url_clone = self.config.bitcoin_rpc_url.clone();
+            let light_client_mode = self.config.light_client_mode;
+            let network_type_clone = self.config.network_type_string.clone();
+            self.bitcoin_proxy_server_handle = Some(tokio::spawn(async move {
+                run_bitcoin_proxy_server(
+                    bitcoin_rpc_url_clone,
+                    light_client_mode,
+                    network_type_clone,
+                    bitcoin_rpc_proxy_addr_clone,
+                )
+                .await
+            }));
+
+            let wait_seconds = get_startup_wait_secs();
+            tracing::info!(
+                "Waiting for the server to start for {} seconds...",
+                wait_seconds
+            );
+            tokio::time::sleep(tokio::time::Duration::from_secs(wait_seconds)).await;
+            tracing::debug!("Continuing initialization...");
+        }
+
         self.reorg_to_last_synced_block_height().await?; // Ensure no residue before proceeding
 
         if get_brc20_database()
@@ -155,32 +181,6 @@ impl Brc20Indexer {
                     BRC20_PROG_VERSION_REQUIREMENT, brc20_prog_version
                 )
                 .into());
-            }
-
-            // Wait for the servers to start
-            if self.config.brc20_prog_bitcoin_rpc_proxy_server_enabled {
-                let bitcoin_rpc_proxy_addr_clone =
-                    self.config.brc20_prog_bitcoin_rpc_proxy_server_addr.clone();
-                let bitcoin_rpc_url_clone = self.config.bitcoin_rpc_url.clone();
-                let light_client_mode = self.config.light_client_mode;
-                let network_type_clone = self.config.network_type_string.clone();
-                self.bitcoin_proxy_server_handle = Some(tokio::spawn(async move {
-                    run_bitcoin_proxy_server(
-                        bitcoin_rpc_url_clone,
-                        light_client_mode,
-                        network_type_clone,
-                        bitcoin_rpc_proxy_addr_clone,
-                    )
-                    .await
-                }));
-
-                let wait_seconds = get_startup_wait_secs();
-                tracing::info!(
-                    "Waiting for the server to start for {} seconds...",
-                    wait_seconds
-                );
-                tokio::time::sleep(tokio::time::Duration::from_secs(wait_seconds)).await;
-                tracing::debug!("Continuing initialization...");
             }
 
             let brc20_prog_block_height =
