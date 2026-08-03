@@ -1150,7 +1150,7 @@ dependencies = [
 
 [[package]]
 name = "brc20-index"
-version = "2.0.11"
+version = "2.0.12"
 dependencies = [
  "axum",
  "axum-server",
@@ -1180,9 +1180,9 @@ dependencies = [
 
 [[package]]
 name = "brc20-prog"
-version = "0.15.9"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e16b34ba4ae2e879a3a24d1201d7896c33fc6add301067f988b1c6dfe7da16f4"
+checksum = "8644c4433628a4ed3e2ef6829646ccb254745ab9ed864e1b9cf048dc3c678a8f"
 dependencies = [
  "alloy",
  "alloy-rlp",
